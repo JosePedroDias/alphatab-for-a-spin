@@ -1,49 +1,54 @@
 // load elements
-const wrapper = document.querySelector(".at-wrap");
-const main = wrapper.querySelector(".at-main");
+const wrapperEl = document.querySelector(".at-wrap");
+const mainEl = wrapperEl.querySelector(".at-main");
+
+// load file from hash
+let hash = (location.hash && location.hash.slice(1)) || "";
+if (!hash) {
+    location.hash = "bass";
+    location.reload();
+}
+if (hash.indexOf('.') === -1) {
+    hash += '.tex';
+}
+const file = `songs/${hash}`;
 
 // initialize alphatab
 const settings = {
-    file: "https://www.alphatab.net/files/canon.gp",
-    //file: "./gptest.gp5",
-    //file: "./cannon_rock.tex",
+    file,
     player: {
         enablePlayer: true,
         soundFont: "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/soundfont/sonivox.sf2",
-        scrollElement: wrapper.querySelector('.at-viewport')
+        scrollElement: wrapperEl.querySelector('.at-viewport')
     },
 };
-const api = new alphaTab.AlphaTabApi(main, settings);
+const api = new alphaTab.AlphaTabApi(mainEl, settings);
 
 // overlay logic
-const overlay = wrapper.querySelector(".at-overlay");
-api.renderStarted.on(() => {
-    overlay.style.display = "flex";
-});
-api.renderFinished.on(() => {
-    overlay.style.display = "none";
-});
+const overlayEl = wrapperEl.querySelector(".at-overlay");
+api.renderStarted.on(() => overlayEl.style.display = "flex");
+api.renderFinished.on(() => overlayEl.style.display = "none");
 
 // track selector
 function createTrackItem(track) {
-    const trackItem = document
+    const trackItemEl = document
         .querySelector("#at-track-template")
         .content.cloneNode(true).firstElementChild;
-    trackItem.querySelector(".at-track-name").innerText = track.name;
-    trackItem.track = track;
-    trackItem.onclick = (e) => {
+    trackItemEl.querySelector(".at-track-name").innerText = track.name;
+    trackItemEl.track = track;
+    trackItemEl.onclick = (e) => {
         e.stopPropagation();
         api.renderTracks([track]);
     };
-    return trackItem;
+    return trackItemEl;
 }
-const trackList = wrapper.querySelector(".at-track-list");
+const trackListEl = wrapperEl.querySelector(".at-track-list");
 api.scoreLoaded.on((score) => {
     // clear items
-    trackList.innerHTML = "";
+    trackListEl.innerHTML = "";
     // generate a track item for all tracks of the score
     score.tracks.forEach((track) => {
-        trackList.appendChild(createTrackItem(track));
+        trackListEl.appendChild(createTrackItem(track));
     });
 });
 api.renderStarted.on(() => {
@@ -53,8 +58,8 @@ api.renderStarted.on(() => {
         tracks.set(t.index, t);
     });
     // mark the item as active or not
-    const trackItems = trackList.querySelectorAll(".at-track");
-    trackItems.forEach((trackItem) => {
+    const trackItemEls = trackListEl.querySelectorAll(".at-track");
+    trackItemEls.forEach((trackItem) => {
         if (tracks.has(trackItem.track.index)) {
             trackItem.classList.add("active");
         } else {
@@ -65,51 +70,51 @@ api.renderStarted.on(() => {
 
 /** Controls **/
 api.scoreLoaded.on((score) => {
-    wrapper.querySelector(".at-song-title").innerText = score.title;
-    wrapper.querySelector(".at-song-artist").innerText = score.artist;
+    wrapperEl.querySelector(".at-song-title").innerText = score.title;
+    wrapperEl.querySelector(".at-song-artist").innerText = score.artist;
 });
 
-const countIn = wrapper.querySelector('.at-controls .at-count-in');
-countIn.onclick = () => {
-    countIn.classList.toggle('active');
-    if (countIn.classList.contains('active')) {
+const countInEl = wrapperEl.querySelector('.at-controls .at-count-in');
+countInEl.onclick = () => {
+    countInEl.classList.toggle('active');
+    if (countInEl.classList.contains('active')) {
         api.countInVolume = 1;
     } else {
         api.countInVolume = 0;
     }
 };
 
-const metronome = wrapper.querySelector(".at-controls .at-metronome");
-metronome.onclick = () => {
-    metronome.classList.toggle("active");
-    if (metronome.classList.contains("active")) {
+const metronomeEl = wrapperEl.querySelector(".at-controls .at-metronome");
+metronomeEl.onclick = () => {
+    metronomeEl.classList.toggle("active");
+    if (metronomeEl.classList.contains("active")) {
         api.metronomeVolume = 1;
     } else {
         api.metronomeVolume = 0;
     }
 };
 
-const loop = wrapper.querySelector(".at-controls .at-loop");
-loop.onclick = () => {
-    loop.classList.toggle("active");
-    api.isLooping = loop.classList.contains("active");
+const loopEl = wrapperEl.querySelector(".at-controls .at-loop");
+loopEl.onclick = () => {
+    loopEl.classList.toggle("active");
+    api.isLooping = loopEl.classList.contains("active");
 };
 
-wrapper.querySelector(".at-controls .at-print").onclick = () => {
+wrapperEl.querySelector(".at-controls .at-print").onclick = () => {
     api.print();
 };
 
-const zoom = wrapper.querySelector(".at-controls .at-zoom select");
-zoom.onchange = () => {
-    const zoomLevel = parseInt(zoom.value) / 100;
+const zoomEl = wrapperEl.querySelector(".at-controls .at-zoom select");
+zoomEl.onchange = () => {
+    const zoomLevel = parseInt(zoomEl.value) / 100;
     api.settings.display.scale = zoomLevel;
     api.updateSettings();
     api.render();
 };
 
-const layout = wrapper.querySelector(".at-controls .at-layout select");
-layout.onchange = () => {
-    switch (layout.value) {
+const layoutEl = wrapperEl.querySelector(".at-controls .at-layout select");
+layoutEl.onchange = () => {
+    switch (layoutEl.value) {
         case "horizontal":
             api.settings.display.layoutMode = alphaTab.LayoutMode.Horizontal;
             break;
@@ -122,23 +127,23 @@ layout.onchange = () => {
 };
 
 // player loading indicator
-const playerIndicator = wrapper.querySelector(
+const playerIndicatorEl = wrapperEl.querySelector(
     ".at-controls .at-player-progress"
 );
 api.soundFontLoad.on((e) => {
     const percentage = Math.floor((e.loaded / e.total) * 100);
-    playerIndicator.innerText = percentage + "%";
+    playerIndicatorEl.innerText = percentage + "%";
 });
 api.playerReady.on(() => {
-    playerIndicator.style.display = "none";
+    playerIndicatorEl.style.display = "none";
 });
 
 // main player controls
-const playPause = wrapper.querySelector(
+const playPauseEl = wrapperEl.querySelector(
     ".at-controls .at-player-play-pause"
 );
-const stop = wrapper.querySelector(".at-controls .at-player-stop");
-playPause.onclick = (e) => {
+const stop = wrapperEl.querySelector(".at-controls .at-player-stop");
+playPauseEl.onclick = (e) => {
     if (e.target.classList.contains("disabled")) {
         return;
     }
@@ -151,11 +156,11 @@ stop.onclick = (e) => {
     api.stop();
 };
 api.playerReady.on(() => {
-    playPause.classList.remove("disabled");
+    playPauseEl.classList.remove("disabled");
     stop.classList.remove("disabled");
 });
 api.playerStateChanged.on((e) => {
-    const icon = playPause.querySelector("i.fas");
+    const icon = playPauseEl.querySelector("i.fas");
     if (e.state === alphaTab.synth.PlayerState.Playing) {
         icon.classList.remove("fa-play");
         icon.classList.add("fa-pause");
@@ -177,7 +182,7 @@ function formatDuration(milliseconds) {
     );
 }
 
-const songPosition = wrapper.querySelector(".at-song-position");
+const songPositionEl = wrapperEl.querySelector(".at-song-position");
 let previousTime = -1;
 api.playerPositionChanged.on((e) => {
     // reduce number of UI updates to second changes.
@@ -186,6 +191,6 @@ api.playerPositionChanged.on((e) => {
         return;
     }
 
-    songPosition.innerText =
+    songPositionEl.innerText =
         formatDuration(e.currentTime) + " / " + formatDuration(e.endTime);
 });
