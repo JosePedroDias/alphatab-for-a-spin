@@ -8,13 +8,11 @@ if (!hash) {
     location.hash = "bass";
     location.reload();
 }
-if (hash.indexOf('.') === -1) {
-    hash += '.tex';
-}
+if (hash.indexOf('.') === -1) hash += '.tex';
 const file = `songs/${hash}`;
 
 // initialize alphatab
-const settings = {
+const api = new alphaTab.AlphaTabApi(mainEl, {
     file,
     player: {
         enablePlayer: true,
@@ -24,8 +22,10 @@ const settings = {
     display: {
         layoutMode: alphaTab.LayoutMode.Horizontal,
     }
-};
-const api = new alphaTab.AlphaTabApi(mainEl, settings);
+});
+
+// exposing api for debugging...
+window.api = api; // .score, .player, .renderer
 
 // overlay logic
 const overlayEl = wrapperEl.querySelector(".at-overlay");
@@ -50,16 +50,12 @@ api.scoreLoaded.on((score) => {
     // clear items
     trackListEl.innerHTML = "";
     // generate a track item for all tracks of the score
-    score.tracks.forEach((track) => {
-        trackListEl.appendChild(createTrackItem(track));
-    });
+    score.tracks.forEach((track) => trackListEl.appendChild(createTrackItem(track)));
 });
 api.renderStarted.on(() => {
     // collect tracks being rendered
     const tracks = new Map();
-    api.tracks.forEach((t) => {
-        tracks.set(t.index, t);
-    });
+    api.tracks.forEach((t) => tracks.set(t.index, t));
     // mark the item as active or not
     const trackItemEls = trackListEl.querySelectorAll(".at-track");
     trackItemEls.forEach((trackItem) => {
@@ -103,9 +99,7 @@ loopEl.onclick = () => {
     api.isLooping = loopEl.classList.contains("active");
 };
 
-wrapperEl.querySelector(".at-controls .at-print").onclick = () => {
-    api.print();
-};
+wrapperEl.querySelector(".at-controls .at-print").onclick = () => api.print();
 
 const zoomEl = wrapperEl.querySelector(".at-controls .at-zoom select");
 zoomEl.onchange = () => {
@@ -130,9 +124,7 @@ layoutEl.onchange = () => {
 };
 
 // player loading indicator
-const playerIndicatorEl = wrapperEl.querySelector(
-    ".at-controls .at-player-progress"
-);
+const playerIndicatorEl = wrapperEl.querySelector(".at-controls .at-player-progress");
 api.soundFontLoad.on((e) => {
     const percentage = Math.floor((e.loaded / e.total) * 100);
     playerIndicatorEl.innerText = percentage + "%";
@@ -142,34 +134,28 @@ api.playerReady.on(() => {
 });
 
 // main player controls
-const playPauseEl = wrapperEl.querySelector(
-    ".at-controls .at-player-play-pause"
-);
-const stop = wrapperEl.querySelector(".at-controls .at-player-stop");
+const playPauseEl = wrapperEl.querySelector(".at-controls .at-player-play-pause");
+const playStopEl = wrapperEl.querySelector(".at-controls .at-player-stop");
 playPauseEl.onclick = (e) => {
-    if (e.target.classList.contains("disabled")) {
-        return;
-    }
+    if (e.target.classList.contains("disabled")) return;
     api.playPause();
 };
-stop.onclick = (e) => {
-    if (e.target.classList.contains("disabled")) {
-        return;
-    }
+playStopEl.onclick = (e) => {
+    if (e.target.classList.contains("disabled")) return;
     api.stop();
 };
 api.playerReady.on(() => {
     playPauseEl.classList.remove("disabled");
-    stop.classList.remove("disabled");
+    playStopEl.classList.remove("disabled");
 });
 api.playerStateChanged.on((e) => {
-    const icon = playPauseEl.querySelector("i.fas");
+    const iconEl = playPauseEl.querySelector("i.fas");
     if (e.state === alphaTab.synth.PlayerState.Playing) {
-        icon.classList.remove("fa-play");
-        icon.classList.add("fa-pause");
+        iconEl.classList.remove("fa-play");
+        iconEl.classList.add("fa-pause");
     } else {
-        icon.classList.remove("fa-pause");
-        icon.classList.add("fa-play");
+        iconEl.classList.remove("fa-pause");
+        iconEl.classList.add("fa-play");
     }
 });
 
@@ -190,10 +176,6 @@ let previousTime = -1;
 api.playerPositionChanged.on((e) => {
     // reduce number of UI updates to second changes.
     const currentSeconds = (e.currentTime / 1000) | 0;
-    if (currentSeconds == previousTime) {
-        return;
-    }
-
-    songPositionEl.innerText =
-        formatDuration(e.currentTime) + " / " + formatDuration(e.endTime);
+    if (currentSeconds == previousTime) return;
+    songPositionEl.innerText = formatDuration(e.currentTime) + " / " + formatDuration(e.endTime);
 });
