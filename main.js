@@ -21,6 +21,9 @@ const settings = {
         soundFont: "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/soundfont/sonivox.sf2",
         scrollElement: wrapperEl.querySelector('.at-viewport')
     },
+    display: {
+        layoutMode: alphaTab.LayoutMode.Horizontal,
+    }
 };
 const api = new alphaTab.AlphaTabApi(mainEl, settings);
 
